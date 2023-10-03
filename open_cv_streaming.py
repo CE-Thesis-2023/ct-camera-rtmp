@@ -4,7 +4,6 @@ import pika
 from dotenv import load_dotenv
 import pickle
 from start_ffmpeg import start_ffmpeg 
-import concurrent.futures
 
 from threading import Thread
 from WebcamVideoStream import WebcamVideoStream
@@ -26,7 +25,7 @@ rabbitmq_url = os.getenv('RABBITMQ_URL')
 pool = concurrent.futures.ThreadPoolExecutor(max_workers=2)
 
 def main():
-    vs = pool.submit(WebcamVideoStream().start())
+    vs = webcamVideoStream().start()
     vs.print()
     
     # RabbitMQ
@@ -53,7 +52,8 @@ def main():
         if len(frame_list) == 10:
             serialized_frames = pickle.dumps(frame_list)
             # Send the list of frames to RabbitMQ
-            pool.submit(channel.basic_publish(exchange='', routing_key='frames', body=serialized_frames))
+            
+            Thread(pool.submit(channel.basic_publish(exchange='', routing_key='frames', body=serialized_frames)), args=()).start()
             # Empty the list
             frame_list = []
 
