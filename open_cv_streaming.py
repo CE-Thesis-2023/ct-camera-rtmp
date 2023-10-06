@@ -2,11 +2,11 @@ import os
 import cv2
 import pika
 from dotenv import load_dotenv
-import pickle
 from start_ffmpeg import start_ffmpeg 
 
 from threading import Thread
 from WebcamVideoStream import WebcamVideoStream
+import msgpack
 
 load_dotenv()
 rtmp_url = os.getenv('RTMP_URL')
@@ -54,10 +54,10 @@ def main():
         # Append the frame to the list
         frame_list.append(frame)
         if len(frame_list) == 10:
-            serialized_frames = pickle.dumps(frame_list)
+            serialized_frames = msgpack.packb(frame_list)
             # Send the list of frames to RabbitMQ
             
-            Thread(channel.basic_publish(exchange='', routing_key='frames', body=serialized_frames), args=()).start()
+            Thread(channel.basic_publish, args=('', 'frames', serialized_frames)).start()
             # Empty the list
             frame_list = []
 
