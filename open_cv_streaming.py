@@ -10,7 +10,10 @@ from WebcamVideoStream import WebcamVideoStream
 
 load_dotenv()
 rtmp_url = os.getenv('RTMP_URL')
-rabbitmq_url = os.getenv('RABBITMQ_URL')
+server_ip = os.getenv("SERVER_IP")
+rabbitmq_port = os.getenv("RABBITMQ_PORT")
+rabbitmq_user = os.getenv("RABBITMQ_USER")
+rabbitmq_pass = os.getenv("RABBITMQ_PASS")
 
 # This is the XML location + file containing the pre-trained classifier for detecting frontal faces in images
 # face_cascade = cv2.CascadeClassifier('./pretrainned-model/haarcascade_frontalface_default.xml')
@@ -24,12 +27,14 @@ rabbitmq_url = os.getenv('RABBITMQ_URL')
 # create a thread pool with 2 threads
 
 def main():
-    vs = webcamVideoStream().start()
+    vs = WebcamVideoStream().start()
     vs.print()
     
     # RabbitMQ
     # Establish a connection to RabbitMQ
-    connection = pika.BlockingConnection(pika.ConnectionParameters(rabbitmq_url))
+    credentials = pika.PlainCredentials(rabbitmq_user, rabbitmq_pass)
+    parameters = pika.ConnectionParameters(server_ip, rabbitmq_port , '/', credentials)
+    connection = pika.BlockingConnection(parameters)
     channel = connection.channel()
     frame_list = []
     
@@ -52,7 +57,7 @@ def main():
             serialized_frames = pickle.dumps(frame_list)
             # Send the list of frames to RabbitMQ
             
-            Thread(channel.basic_publish, args=('', 'frames', serialized_frames)).start()
+            Thread(channel.basic_publish(exchange='', routing_key='frames', body=serialized_frames), args=()).start()
             # Empty the list
             frame_list = []
 
