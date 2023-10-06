@@ -36,7 +36,7 @@ def main():
     parameters = pika.ConnectionParameters(server_ip, rabbitmq_port , '/', credentials)
     connection = pika.BlockingConnection(parameters)
     channel = connection.channel()
-    frame_list = []
+    frame_list = list()
     
     
     ffmpeg_process = start_ffmpeg(rtmp_url)
@@ -54,10 +54,10 @@ def main():
         # Append the frame to the list
         frame_list.append(frame)
         if len(frame_list) == 10:
-            serialized_frames = pickle.dump(frame_list)
+            serialized_frames = pickle.dumps(frame_list)
             # Send the list of frames to RabbitMQ
             
-            Thread(channel.basic_publish, args=('', 'frames', serialized_frames)).start()
+            channel.basic_publish(exchange='', routing_key='frames', body=serialized_frames)
             # Empty the list
             frame_list = []
 

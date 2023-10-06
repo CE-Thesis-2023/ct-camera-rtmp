@@ -3,7 +3,7 @@ import subprocess as sp
 def start_ffmpeg(rtmp_url):
     command = [
       'ffmpeg',
-      '-s', '1280x720',
+      '-s', '640x480',
       '-y',
       '-f', 'rawvideo',
       '-pix_fmt', 'bgr24',
